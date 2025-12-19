@@ -26,6 +26,83 @@ struct QueryResult {
     data: Vec<serde_json::Value>,
     total: Option<i64>,
 }
+// 查询库名
+#[tauri::command]
+async fn get_database_name(state: State<'_, AppState>) -> Result<String, String> {
+    //     let mut app_connection = state.connection.lock().await;
+
+    //     // 构建PostgreSQL连接配置
+    //     let mut pg_config = Config::new();
+    //     pg_config.host(&config.host);
+    //     pg_config.port(config.port);
+    //     pg_config.user(&config.username);
+    //     pg_config.password(&config.password);
+    //     pg_config.dbname(&config.database);
+
+    //     // 连接到PostgreSQL
+    //     let (client, connection) = pg_config
+    //         .connect(NoTls)
+    //         .await
+    //         .map_err(|e| format!("连接失败: {}", e))?;
+
+    //     // 后台运行连接
+    //     tokio::spawn(async move {
+    //         if let Err(e) = connection.await {
+    //             eprintln!("PostgreSQL连接错误: {}", e);
+    //         }
+    //     });
+
+    //     // 测试连接
+    //     client
+    //         .query_one(
+    //             " SELECT datname
+    //  FROM pg_database
+    // WHERE datistemplate = false
+    // ORDER BY datname;",
+    //             &[],
+    //         )
+    //         .await
+    //         .map_err(|e| format!("连接验证失败: {}", e))?;
+
+    //     println!("PostgreSQL连接成功! 查询库名称: {:?}", client);
+
+    //     app_connection.client = Some(client);
+
+    //     Ok(true)
+    let app_connection = state.connection.lock().await;
+    let current_client = app_connection.client.as_ref().ok_or("未连接到数据库")?;
+
+    // 获取当前连接的数据库
+    let current_db = current_client
+        .query_one("SELECT current_database()", &[])
+        .await
+        .map(|row| row.get::<_, String>(0))
+        .unwrap_or_else(|_| "".to_string());
+
+    // 如果数据库与当前连接的数据库相同，直接使用当前连接
+    let rows = current_client
+        .query(
+            " SELECT datname FROM pg_database WHERE datistemplate = false ORDER BY datname",
+            &[],
+        )
+        .await
+        .map_err(|e| format!("获取表列表失败: {}", e))?;
+    for row in &rows {
+        let db_name: &str = row.get(0); // 获取第一列的值
+        println!("{}", db_name);
+    }
+    // 使用try_get避免panic
+    let collections: Vec<String> = rows
+        .iter()
+        .filter_map(|row| row.try_get(0).unwrap_or(None))
+        .collect();
+
+    let result = serde_json::json!({
+        "collections": collections
+    });
+
+    return Ok(result.to_string());
+}
 
 #[tauri::command]
 async fn connect_postgresql(
@@ -207,13 +284,14 @@ async fn list_collections(database: String, state: State<'_, AppState>) -> Resul
     let app_connection = state.connection.lock().await;
     let current_client = app_connection.client.as_ref().ok_or("未连接到数据库")?;
 
-    // 如果数据库与当前连接的数据库相同，直接使用当前连接
+    // 获取当前连接的数据库
     let current_db = current_client
         .query_one("SELECT current_database()", &[])
         .await
         .map(|row| row.get::<_, String>(0))
         .unwrap_or_else(|_| "".to_string());
 
+    // 如果数据库与当前连接的数据库相同，直接使用当前连接
     if current_db == database {
         let rows = current_client
             .query(
@@ -236,12 +314,56 @@ async fn list_collections(database: String, state: State<'_, AppState>) -> Resul
         return Ok(result.to_string());
     }
 
-    // 对于跨数据库查询，我们简化处理：只返回空数组
-    let result = serde_json::json!({
-        "collections": []
-    });
+    // 尝试多种方法
+    let queries = vec![
+        // 方法1：标准跨库查询
+        format!(
+            "SELECT table_name 
+             FROM information_schema.tables 
+             WHERE table_catalog = '{}' 
+             AND table_schema = 'public' 
+             AND table_type = 'BASE TABLE'",
+            database
+        ),
+        // 方法2：使用数据库名作为schema前缀
+        format!(
+            "SELECT table_name 
+             FROM {}.information_schema.tables 
+             WHERE table_schema = 'public' 
+             AND table_type = 'BASE TABLE'",
+            database
+        ),
+        // 方法3：使用全限定名
+        format!(
+            "SELECT table_name 
+             FROM information_schema.tables 
+             WHERE table_schema = '{}'",
+            database
+        ),
+    ];
 
-    Ok(result.to_string())
+    // 尝试所有方法，返回第一个成功的
+    for query in queries {
+        match current_client.query(&query, &[]).await {
+            Ok(rows) => {
+                let collections: Vec<String> = rows
+                    .iter()
+                    .filter_map(|row| row.try_get("table_name").unwrap_or(None))
+                    .collect();
+
+                if !collections.is_empty() {
+                    let result = serde_json::json!({
+                        "collections": collections
+                    });
+                    return Ok(result.to_string());
+                }
+            }
+            Err(_) => continue,
+        }
+    }
+
+    // 如果所有方法都失败，返回空数组
+    Ok(serde_json::json!({ "collections": [] }).to_string())
 }
 
 async fn execute_query_internal(
@@ -495,7 +617,7 @@ fn row_to_json(row: &Row) -> serde_json::Value {
 
         // 记录调试信息
         debug_info.insert(
-            name.clone().to_string(),
+            name.to_string(),
             serde_json::json!({
                 "type": format!("{:?}", column_type),
                 "value": value.clone(),
@@ -525,6 +647,7 @@ pub fn run() {
             list_databases,
             list_collections,
             execute_query,
+            get_database_name
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
