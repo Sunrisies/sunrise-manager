@@ -591,11 +591,45 @@ fn row_to_json(row: &Row) -> serde_json::Value {
                 }
             }
             &Type::TIMESTAMP | &Type::TIMESTAMPTZ | &Type::DATE | &Type::TIME => {
-                match row.try_get::<_, Option<String>>(i) {
-                    Ok(Some(v)) => serde_json::Value::String(v),
-                    _ => serde_json::Value::Null,
+                // 时间类型统一用字符串处理，通过任何可能的方式获取
+                println!("i: {}, name: {}, column_type: {:?}", i, name, column_type);
+
+                // 1. 尝试直接获取String
+                if let Ok(Some(s)) = row.try_get::<_, Option<String>>(i) {
+                    serde_json::Value::String(s)
+                }
+                // 2. 尝试获取&str然后转为String
+                else if let Ok(Some(s)) = row.try_get::<_, Option<&str>>(i) {
+                    serde_json::Value::String(s.to_string())
+                }
+                // 3. 尝试获取chrono::NaiveDateTime
+                else if let Ok(Some(dt)) = row.try_get::<_, Option<chrono::NaiveDateTime>>(i) {
+                    serde_json::Value::String(dt.to_string())
+                }
+                // 4. 尝试获取chrono::DateTime<Utc>
+                else if let Ok(dt) = row.try_get::<_, Option<chrono::DateTime<chrono::Utc>>>(i) {
+                    serde_json::Value::String(dt.map(|d| d.to_string()).unwrap_or_default())
+                }
+                // 5. 尝试获取chrono::DateTime<Local>
+                else if let Ok(dt) = row.try_get::<_, Option<chrono::DateTime<chrono::Local>>>(i)
+                {
+                    serde_json::Value::String(dt.map(|d| d.to_string()).unwrap_or_default())
+                }
+                // 6. 尝试获取chrono::NaiveDate
+                else if let Ok(date) = row.try_get::<_, Option<chrono::NaiveDate>>(i) {
+                    serde_json::Value::String(date.map(|d| d.to_string()).unwrap_or_default())
+                }
+                // 7. 尝试获取chrono::NaiveTime
+                else if let Ok(time) = row.try_get::<_, Option<chrono::NaiveTime>>(i) {
+                    serde_json::Value::String(time.map(|t| t.to_string()).unwrap_or_default())
+                }
+                // 8. 如果都失败，返回null
+                else {
+                    println!("Failed to get value for column: {}", name);
+                    serde_json::Value::Null
                 }
             }
+
             &Type::JSON | &Type::JSONB => {
                 match row.try_get::<_, Option<String>>(i) {
                     Ok(Some(v)) => serde_json::Value::String(v), // 保持JSON字符串
