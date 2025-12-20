@@ -505,7 +505,7 @@ function App() {
 
           {/* 查询区域 - 仅当有选择表时显示 */}
           {(selectedDatabase && selectedCollection) && (
-            <div className="flex-1 ">
+            <div className="flex-1 max-w-[calc(100%_-_var(--spacing)_*_52)]">
               <div className="px-2 ">
                 <QueryEditor
                   onExecuteQuery={handleExecuteQuery}
@@ -514,9 +514,7 @@ function App() {
                   collection={selectedCollection}
                 />
                 {queryResult && (
-                  <div className="px-2 ">
-                    <QueryResultDisplay result={queryResult} />
-                  </div>
+                  <QueryResultDisplay result={queryResult} />
                 )}
               </div>
 

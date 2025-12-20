@@ -40,7 +40,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, className = "" }) =>
             {/* 表格容器 - 支持滚动 */}
             <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
                 <div className="max-h-96 overflow-auto">
-                    <table className="w-full text-left text-sm">
+                    <table className="w-full text-left text-sm min-w-max">
                         <thead className="bg-gray-50 sticky top-0 z-10">
                             <tr>
                                 {columns.map((col) => (

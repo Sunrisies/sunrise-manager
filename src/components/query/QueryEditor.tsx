@@ -33,7 +33,7 @@ export const QueryEditor: React.FC<QueryEditorProps> = ({
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-semibold text-gray-800">查询编辑器</h2>
+                <h2 className="text-sm font-semibold text-gray-800">查询编辑器</h2>
                 <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
                     {database && collection ? (
                         <span className="font-mono">
@@ -44,11 +44,11 @@ export const QueryEditor: React.FC<QueryEditorProps> = ({
                         <span className="italic">未选择表</span>
                     )}
                 </div>
-                <div className="flex justify-end mt-3 gap-2">
+                <div className="flex justify-end gap-2">
                     <button
                         onClick={handleExecute}
                         disabled={loading || !query.trim()}
-                        className={cn("btn-primary", loading && "opacity-70 cursor-not-allowed")}
+                        className={cn("btn-primary text-sm px-4 py-2", loading && " opacity-70 cursor-not-allowed")}
                     >
                         {loading ? (
                             <span className="flex items-center gap-2">
@@ -142,7 +142,7 @@ export const QueryResultDisplay: React.FC<QueryResultProps> = ({ result }) => {
         return (
             <div className="bg-white border border-gray-200 rounded-xl p-8 text-center">
                 <div className="text-4xl mb-2">📊</div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-1">准备就绪</h3>
+                <h3 className="text-sm font-semibold text-gray-800 mb-1">准备就绪</h3>
                 <p className="text-sm text-gray-500">执行查询后，结果将显示在这里</p>
             </div>
         );
@@ -177,9 +177,9 @@ export const QueryResultDisplay: React.FC<QueryResultProps> = ({ result }) => {
         const totalDuration = result.reduce((sum, item) => sum + (item.duration || 0), 0);
 
         return (
-            <div className="space-y-3">
+            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
                 {/* 总耗时统计 */}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-between">
+                <div className="bg-amber-50 px-4 py-3 border-b border-amber-200 flex items-center justify-between">
                     <span className="text-sm font-semibold text-amber-800">
                         多语句查询完成
                     </span>
@@ -189,7 +189,9 @@ export const QueryResultDisplay: React.FC<QueryResultProps> = ({ result }) => {
                 </div>
 
                 {/* 使用表格组件显示多语句结果 */}
-                <MultiQueryDataTable results={result} />
+                <div className="p-2 overflow-x-auto">
+                    <MultiQueryDataTable results={result} />
+                </div>
             </div>
         );
     }
@@ -200,7 +202,7 @@ export const QueryResultDisplay: React.FC<QueryResultProps> = ({ result }) => {
 
     return (
         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-            <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <div className="bg-gray-50 p-2 border-b border-gray-200 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-800">
                     {result.sql ? `SQL查询结果` : '查询结果'}
                 </h3>
@@ -227,7 +229,7 @@ export const QueryResultDisplay: React.FC<QueryResultProps> = ({ result }) => {
                 </div>
             )}
 
-            <div className="p-4">
+            <div className="p-4 overflow-x-auto">
                 {!hasData ? (
                     <div className="text-center py-8">
                         <div className="text-3xl mb-2">📭</div>
