@@ -44,6 +44,22 @@ export const QueryEditor: React.FC<QueryEditorProps> = ({
                         <span className="italic">未选择表</span>
                     )}
                 </div>
+                <div className="flex justify-end mt-3 gap-2">
+                    <button
+                        onClick={handleExecute}
+                        disabled={loading || !query.trim()}
+                        className={cn("btn-primary", loading && "opacity-70 cursor-not-allowed")}
+                    >
+                        {loading ? (
+                            <span className="flex items-center gap-2">
+                                <span className="animate-spin">⟳</span>
+                                执行中...
+                            </span>
+                        ) : (
+                            "执行查询"
+                        )}
+                    </button>
+                </div>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
@@ -97,23 +113,7 @@ SELECT COUNT(*) FROM users;
                         disabled={loading}
                     />
 
-                    <div className="flex justify-end mt-3 gap-2">
-                        <button
-                            onClick={handleExecute}
-                            disabled={loading || !query.trim()}
-                            className={cn("btn-primary", loading && "opacity-70 cursor-not-allowed")}
-                        >
-                            <PlayIcon className="w-4 h-4 mr-1.5" />
-                            {loading ? (
-                                <span className="flex items-center gap-2">
-                                    <span className="animate-spin">⟳</span>
-                                    执行中...
-                                </span>
-                            ) : (
-                                "执行查询"
-                            )}
-                        </button>
-                    </div>
+
                 </div>
             </div>
         </div>

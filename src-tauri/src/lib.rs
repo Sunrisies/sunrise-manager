@@ -629,7 +629,7 @@ fn row_to_json(row: &Row) -> serde_json::Value {
     }
 
     // 在结果中包含调试信息（生产环境中可以移除）
-    map.insert("__debug".to_string(), serde_json::Value::Object(debug_info));
+    // map.insert("__debug".to_string(), serde_json::Value::Object(debug_info));
 
     serde_json::Value::Object(map)
 }

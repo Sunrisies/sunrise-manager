@@ -276,7 +276,7 @@ function App() {
         queryPromise,
         timeoutPromise
       ]) as string;
-
+      console.log(result);
       const endTime = Date.now();
       const duration = (endTime - startTime) / 1000;
 
@@ -505,49 +505,22 @@ function App() {
 
           {/* 查询区域 - 仅当有选择表时显示 */}
           {(selectedDatabase && selectedCollection) && (
-            <div className="grid flex-1 grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="glass-card p-4 lg:col-span-1">
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-1">当前选择</h3>
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div className="text-xs text-gray-500">数据库</div>
-                      <div className="text-sm font-semibold text-blue-700">{selectedDatabase}</div>
-                      <div className="text-xs text-gray-500 mt-1">表</div>
-                      <div className="text-sm font-semibold text-blue-700">
-                        {selectedCollection.includes('.') ? selectedCollection.split('.').slice(-1)[0] : selectedCollection}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedDatabase(undefined);
-                      setSelectedCollection(undefined);
-                      setQueryResult(null);
-                    }}
-                    className="w-full btn-secondary text-xs"
-                  >
-                    清空选择
-                  </button>
-                </div>
-              </div>
-
-              <div className="lg:col-span-2 space-y-6">
-                <div className="glass-card p-4">
-                  <QueryEditor
-                    onExecuteQuery={handleExecuteQuery}
-                    loading={loading}
-                    database={selectedDatabase}
-                    collection={selectedCollection}
-                  />
-                </div>
-
+            <div className="flex-1 ">
+              <div className="px-2 ">
+                <QueryEditor
+                  onExecuteQuery={handleExecuteQuery}
+                  loading={loading}
+                  database={selectedDatabase}
+                  collection={selectedCollection}
+                />
                 {queryResult && (
-                  <div className="glass-card p-4">
+                  <div className="px-2 ">
                     <QueryResultDisplay result={queryResult} />
                   </div>
                 )}
               </div>
+
+
             </div>
           )}
         </div>
