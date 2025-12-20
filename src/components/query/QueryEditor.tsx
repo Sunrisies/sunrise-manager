@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { PlayIcon } from "../ui/icons";
 import { cn } from "../../lib/utils";
+import { DataTable, MultiQueryDataTable } from "./DataTable";
 
 interface QueryEditorProps {
     onExecuteQuery: (query: string) => void;
@@ -188,40 +188,8 @@ export const QueryResultDisplay: React.FC<QueryResultProps> = ({ result }) => {
                     </span>
                 </div>
 
-                {result.map((item, index) => (
-                    <div key={index} className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-sm font-semibold text-gray-800">
-                                    查询 {index + 1}: {item.type === 'select' ? 'SELECT' : item.type === 'write' ? '写操作' : 'DDL'}
-                                </h3>
-                                {item.rows_affected !== undefined && (
-                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-                                        {item.rows_affected} 行
-                                    </span>
-                                )}
-                            </div>
-                            {item.duration !== undefined && (
-                                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                                    {item.duration.toFixed(2)}s
-                                </span>
-                            )}
-                        </div>
-                        <div className="p-2 bg-gray-100 border-b border-gray-200">
-                            <pre className="text-xs text-gray-600 font-mono overflow-x-auto">{item.sql}</pre>
-                        </div>
-                        {item.data && (
-                            <div className="max-h-64 overflow-auto bg-gray-900">
-                                <div className="p-2 bg-yellow-900 text-yellow-200 text-xs mb-2 rounded">
-                                    💡 调试提示：如果值显示为null，请查看__debug字段获取原始数据
-                                </div>
-                                <pre className="result-pre text-left leading-relaxed text-xs">
-                                    {JSON.stringify(item.data, null, 2)}
-                                </pre>
-                            </div>
-                        )}
-                    </div>
-                ))}
+                {/* 使用表格组件显示多语句结果 */}
+                <MultiQueryDataTable results={result} />
             </div>
         );
     }
@@ -259,7 +227,7 @@ export const QueryResultDisplay: React.FC<QueryResultProps> = ({ result }) => {
                 </div>
             )}
 
-            <div className="p-0">
+            <div className="p-4">
                 {!hasData ? (
                     <div className="text-center py-8">
                         <div className="text-3xl mb-2">📭</div>
@@ -269,23 +237,9 @@ export const QueryResultDisplay: React.FC<QueryResultProps> = ({ result }) => {
                         )}
                     </div>
                 ) : (
-                    <div className="max-h-96 overflow-auto bg-gray-900">
-                        <div className="p-2 bg-yellow-900 text-yellow-200 text-xs mb-2 rounded">
-                            💡 调试提示：如果值显示为null，请查看__debug字段获取原始数据
-                        </div>
-                        <pre className="result-pre text-left leading-relaxed">
-                            {JSON.stringify(result.data, null, 2)}
-                        </pre>
-                    </div>
+                    <DataTable data={result.data} />
                 )}
             </div>
-
-            {/* 结果提示 */}
-            {hasData && (
-                <div className="bg-blue-50 px-4 py-2 border-t border-blue-100 text-xs text-blue-700">
-                    💡 提示：结果以 JSON 格式显示，支持滚动查看完整数据
-                </div>
-            )}
         </div>
     );
 };
