@@ -306,7 +306,7 @@ async fn list_collections(database: String, state: State<'_, AppState>) -> Resul
             .iter()
             .filter_map(|row| row.try_get("table_name").unwrap_or(None))
             .collect();
-
+        println!("collections: {:#?}", collections);
         let result = serde_json::json!({
             "collections": collections
         });

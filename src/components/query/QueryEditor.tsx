@@ -116,34 +116,6 @@ SELECT COUNT(*) FROM users;
                     </div>
                 </div>
             </div>
-
-            {/* 快速示例卡片 */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <div className="text-xs font-semibold text-blue-800 mb-2">常用查询示例:</div>
-                <div className="space-y-1 text-xs text-blue-700 font-mono">
-                    <div className="cursor-pointer hover:bg-blue-100 p-1 rounded" onClick={() => setQuery(JSON.stringify({
-                        table: "users",
-                        operation: "find",
-                        filter: {}
-                    }, null, 2))}>
-                        • 查询所有用户
-                    </div>
-                    <div className="cursor-pointer hover:bg-blue-100 p-1 rounded" onClick={() => setQuery(JSON.stringify({
-                        table: "users",
-                        operation: "count",
-                        filter: { age: { "$gt": 18 } }
-                    }, null, 2))}>
-                        • 统计成年用户
-                    </div>
-                    <div className="cursor-pointer hover:bg-blue-100 p-1 rounded" onClick={() => setQuery(JSON.stringify({
-                        table: "users",
-                        operation: "findOne",
-                        filter: { name: "John" }
-                    }, null, 2))}>
-                        • 查找单个用户
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };
