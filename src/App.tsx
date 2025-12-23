@@ -5,6 +5,7 @@ import "./App.css";
 import { ConnectionManager, ConnectionConfig } from "./components/connections/ConnectionManager";
 import { ConnectionForm } from "./components/connections/ConnectionForm";
 import { QueryEditor, QueryResultDisplay } from "./components/query/QueryEditor";
+import { QueryTemplates } from "./components/query/QueryTemplates";
 import { cn } from "./lib/utils";
 
 interface Database {
@@ -28,6 +29,15 @@ function App() {
   const [queryResult, setQueryResult] = useState<any>(null);
   const [showConnectionForm, setShowConnectionForm] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
+  const [templateQuery, setTemplateQuery] = useState<string>("");
+
+  // 右键菜单状态
+  const [contextMenu, setContextMenu] = useState<{
+    show: boolean;
+    x: number;
+    y: number;
+    connectionId?: string;
+  }>({ show: false, x: 0, y: 0, connectionId: undefined });
 
   // 从本地存储加载连接配置
   useEffect(() => {
@@ -338,46 +348,55 @@ function App() {
     }
   };
 
+  // 关闭右键菜单
+  const closeContextMenu = () => {
+    setContextMenu({ show: false, x: 0, y: 0, connectionId: undefined });
+  };
+
+  // 全局点击关闭右键菜单
+  useEffect(() => {
+    const handleClick = () => {
+      if (contextMenu.show) {
+        closeContextMenu();
+      }
+    };
+
+    if (contextMenu.show) {
+      document.addEventListener('click', handleClick);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClick);
+    };
+  }, [contextMenu.show]);
+
   return (
-    <div className="h-screen overflow-hidden bg-gray-50">
+    <div
+      className="h-screen overflow-hidden bg-gray-50"
+      onContextMenu={(e) => {
+        // 点击空白处关闭右键菜单
+        if (e.target === e.currentTarget) {
+          e.preventDefault();
+          closeContextMenu();
+        }
+      }}
+    >
       {/* 主内容区域 */}
       <div className="h-full max-w-7xl mx-auto flex flex-col">
         <div className="flex flex-1 overflow-hidden">
           {/* 连接管理 + 数据库浏览器 - 优化左侧边栏 */}
           <div className="w-72 flex flex-col h-full overflow-hidden">
             {/* 侧边栏头部 */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-5 mb-4 shadow-lg">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-                  </svg>
-                  数据库连接
-                </h2>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowConnectionForm(true)}
-                  className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20 flex items-center justify-center gap-1"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  新建
-                </button>
-                {isConnected && (
-                  <button
-                    onClick={handleDisconnect}
-                    className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-100 text-xs font-semibold py-2 px-3 rounded-lg transition-all duration-200 backdrop-blur-sm border border-red-400/30 flex items-center justify-center gap-1"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
-                    </svg>
-                    断开
-                  </button>
-                )}
-              </div>
+            <div className="text-block w-auto p-2">
+              <button
+                onClick={() => setShowConnectionForm(true)}
+                className="flex-1  text-xs font-semibold py-2 cursor-pointer px-3 rounded-lg transition-all duration-200 backdrop-blur-sm border border-black/20 flex items-center justify-center gap-1"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+                新建
+              </button>
             </div>
 
             {/* 隐藏ConnectionManagerUI但保持功能 */}
@@ -422,6 +441,17 @@ function App() {
                           setConnections(prev => prev.map(c =>
                             c.id === conn.id ? { ...c, expanded: !c.expanded } : c
                           ));
+                        }
+                      }}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        if (isActive) {
+                          setContextMenu({
+                            show: true,
+                            x: e.clientX,
+                            y: e.clientY,
+                            connectionId: conn.id
+                          });
                         }
                       }}
                     >
@@ -541,6 +571,16 @@ function App() {
               })}
             </div>
 
+            {/* 查询模板组件 - 与连接列表更好的整合 */}
+            <div className="mt-3">
+              <QueryTemplates
+                onSelectQuery={(query) => {
+                  // 设置模板查询内容，会通过props传递给QueryEditor
+                  setTemplateQuery(query);
+                }}
+              />
+            </div>
+
             {/* 加载状态 */}
             {loading && (
               <div className="mt-3 text-center text-sm text-blue-600 flex items-center justify-center gap-2">
@@ -559,6 +599,7 @@ function App() {
                   loading={loading}
                   database={selectedDatabase}
                   collection={selectedCollection}
+                  initialQuery={templateQuery}
                 />
                 {queryResult && (
                   <div className="border-t border-gray-200 flex-1 overflow-hidden">
@@ -569,12 +610,6 @@ function App() {
             </div>
           )}
         </div>
-
-        {/* 底部信息栏 - 优化样式 */}
-        <div className="bg-white border-t border-gray-200 py-3 text-center text-gray-500 text-sm mt-auto">
-          <p className="font-semibold text-gray-700">PostgreSQL Manager v1.0</p>
-          <p className="mt-1 text-xs opacity-75">💡 提示：点击连接查看所有库，点击库名切换当前库</p>
-        </div>
       </div>
 
       {/* 连接表单模态框 */}
@@ -584,6 +619,47 @@ function App() {
           onCancel={() => setShowConnectionForm(false)}
           loading={formLoading}
         />
+      )}
+
+      {/* 右键菜单 */}
+      {contextMenu.show && (
+        <div
+          className="fixed bg-white border border-gray-200 rounded-lg shadow-xl py-1 z-50 min-w-[160px]"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`
+          }}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <div
+            className="px-3 py-2 text-xs hover:bg-red-50 hover:text-red-700 cursor-pointer flex items-center gap-2 transition-colors"
+            onClick={() => {
+              handleDisconnect();
+              closeContextMenu();
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
+            </svg>
+            断开连接
+          </div>
+          <div className="border-t border-gray-200 my-1"></div>
+          <div
+            className="px-3 py-2 text-xs hover:bg-blue-50 hover:text-blue-700 cursor-pointer flex items-center gap-2 transition-colors"
+            onClick={() => {
+              const connection = connections.find(c => c.id === contextMenu.connectionId);
+              if (connection) {
+                handleDeleteConnection(connection.id);
+              }
+              closeContextMenu();
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            删除连接
+          </div>
+        </div>
       )}
     </div>
   );

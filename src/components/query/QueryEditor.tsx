@@ -7,6 +7,7 @@ interface QueryEditorProps {
     loading: boolean;
     database?: string;
     collection?: string;
+    initialQuery?: string;
 }
 
 export const QueryEditor: React.FC<QueryEditorProps> = ({
@@ -14,8 +15,16 @@ export const QueryEditor: React.FC<QueryEditorProps> = ({
     loading,
     database,
     collection,
+    initialQuery = "",
 }) => {
-    const [query, setQuery] = useState("");
+    const [query, setQuery] = useState(initialQuery);
+
+    // 当initialQuery变化时更新query
+    React.useEffect(() => {
+        if (initialQuery) {
+            setQuery(initialQuery);
+        }
+    }, [initialQuery]);
 
     const handleExecute = () => {
         if (query.trim()) {
