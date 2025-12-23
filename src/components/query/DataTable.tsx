@@ -37,16 +37,16 @@ export const DataTable: React.FC<DataTableProps> = ({ data, className = "" }) =>
                 </div>
             )}
 
-            {/* 表格容器 - 支持滚动 */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
-                <div className="max-h-96 overflow-auto">
+            {/* 表格容器 - 只在表格内部支持滚动 */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                <div className="overflow-auto max-h-80">
                     <table className="w-full text-left text-sm min-w-max">
-                        <thead className="bg-gray-50 sticky top-0 z-10">
+                        <thead className="bg-gray-50 sticky top-0 z-10 shadow-sm">
                             <tr>
                                 {columns.map((col) => (
                                     <th
                                         key={col}
-                                        className="px-4 py-3 font-semibold text-gray-700 border-b border-gray-200 whitespace-nowrap"
+                                        className="px-3 py-2.5 font-semibold text-gray-700 border-b border-gray-200 whitespace-nowrap bg-gray-50"
                                     >
                                         {col}
                                     </th>
@@ -57,7 +57,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, className = "" }) =>
                             {data.map((row, rowIndex) => (
                                 <tr
                                     key={rowIndex}
-                                    className="hover:bg-gray-50 transition-colors"
+                                    className="hover:bg-blue-50 transition-colors"
                                 >
                                     {columns.map((col) => {
                                         const value = row[col];
@@ -67,7 +67,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, className = "" }) =>
                                         return (
                                             <td
                                                 key={`${rowIndex}-${col}`}
-                                                className="px-4 py-3 text-gray-700 font-mono text-xs whitespace-nowrap max-w-xs overflow-hidden text-ellipsis"
+                                                className="px-3 py-2 text-gray-700 font-mono text-xs whitespace-nowrap max-w-[200px] overflow-hidden text-ellipsis"
                                                 title={displayValue}
                                             >
                                                 {value === null ? (
@@ -88,9 +88,9 @@ export const DataTable: React.FC<DataTableProps> = ({ data, className = "" }) =>
             </div>
 
             {/* 数据统计 */}
-            <div className="mt-2 text-xs text-gray-500 flex items-center gap-3">
-                <span>📊 共 {data.length} 行数据</span>
-                <span>📋 {columns.length} 列</span>
+            <div className="mt-2 text-xs text-gray-500 flex items-center gap-3 bg-gray-50 px-3 py-2 rounded-lg border border-gray-200">
+                <span className="font-medium">📊 {data.length} 行</span>
+                <span className="font-medium">📋 {columns.length} 列</span>
             </div>
         </div>
     );

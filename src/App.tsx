@@ -312,201 +312,225 @@ function App() {
   };
 
   return (
-    <div className="h-full">
+    <div className="h-screen overflow-hidden bg-gray-50">
       {/* 主内容区域 */}
-      <div className="max-w-7xl border flex flex-col h-full p-2">
-        <div className="flex flex-1">
-          {/* 连接管理 + 数据库浏览器 - 合并为树形结构 */}
-          <div className="mb-6 border w-52 flex flex-col">
-            <div className="glass-card p-4">
-              <div className=" items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-800">我的连接</h2>
-                <div className="flex gap-2">
+      <div className="h-full max-w-7xl mx-auto flex flex-col">
+        <div className="flex flex-1 overflow-hidden">
+          {/* 连接管理 + 数据库浏览器 - 优化左侧边栏 */}
+          <div className="w-72 flex flex-col h-full overflow-hidden">
+            {/* 侧边栏头部 */}
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl p-5 mb-4 shadow-lg">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                  </svg>
+                  数据库连接
+                </h2>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => {
+                    if ((window as any).showConnectionForm) {
+                      (window as any).showConnectionForm();
+                    }
+                  }}
+                  className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20 flex items-center justify-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  新建
+                </button>
+                {isConnected && (
                   <button
-                    onClick={() => {
-                      if ((window as any).showConnectionForm) {
-                        (window as any).showConnectionForm();
-                      }
-                    }}
-                    className="btn-primary text-xs px-3 py-1.5"
+                    onClick={handleDisconnect}
+                    className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-100 text-xs font-semibold py-2 px-3 rounded-lg transition-all duration-200 backdrop-blur-sm border border-red-400/30 flex items-center justify-center gap-1"
                   >
-                    + 新建连接
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 12H6" />
+                    </svg>
+                    断开
                   </button>
-                  {isConnected && (
-                    <button
-                      onClick={handleDisconnect}
-                      className="btn-danger text-xs px-3 py-1.5"
-                    >
-                      断开连接
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* 隐藏ConnectionManagerUI但保持功能 */}
-              <div className="hidden">
-                <ConnectionManager
-                  connections={connections}
-                  onAdd={handleAddConnection}
-                  onConnect={handleConnect}
-                  onDelete={handleDeleteConnection}
-                  onDisconnect={handleDisconnect}
-                  isConnected={isConnected}
-                  currentConnection={currentConnection}
-                />
-              </div>
-
-              {/* 树形连接列表 */}
-              <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
-                {connections.length === 0 && (
-                  <div className="text-center py-8 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl">
-                    <p className="text-gray-500 text-sm">暂无连接，请创建新连接</p>
-                  </div>
                 )}
-
-                {connections.map((conn) => {
-                  const isActive = currentConnection === conn.id;
-                  const isExpanded = conn.expanded && isActive;
-                  const hasDatabases = conn.databases && conn.databases.length > 0;
-
-                  return (
-                    <div key={conn.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white">
-                      {/* 连接节点 */}
-                      <div
-                        className={cn(
-                          "flex items-center justify-between p-3 cursor-pointer transition-colors",
-                          isActive ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50",
-                          isExpanded && "border-b border-gray-200"
-                        )}
-                        onClick={() => {
-                          if (!isActive) {
-                            handleConnect(conn.id);
-                          } else {
-                            setConnections(prev => prev.map(c =>
-                              c.id === conn.id ? { ...c, expanded: !c.expanded } : c
-                            ));
-                          }
-                        }}
-                      >
-                        <div className="flex items-center gap-2 flex-1">
-                          <span className={cn("font-semibold", isActive ? "text-blue-700" : "text-gray-800")}>
-                            {conn.name}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {isActive && (
-                            <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full">
-                              {isExpanded ? '展开' : '连接中'}
-                            </span>
-                          )}
-                          {hasDatabases && (
-                            <span className="text-xs text-gray-400">
-                              {isExpanded ? '▲' : '▼'}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* 数据库列表 - 显示所有数据库 */}
-                      {isExpanded && conn.databases && conn.databases.length > 0 && (
-                        <div className="bg-gray-50 p-2 space-y-1">
-                          {conn.databases.map((db) => {
-                            const isDBSelected = selectedDatabase === db.name;
-
-                            return (
-                              <div key={db.name} className="border border-gray-200 rounded-md overflow-hidden bg-white">
-                                {/* 数据库节点 */}
-                                <div
-                                  className={cn(
-                                    "flex items-center justify-between p-2 cursor-pointer transition-colors text-sm",
-                                    isDBSelected ? "bg-blue-100 text-blue-700" : "hover:bg-gray-50"
-                                  )}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDatabaseClick(conn.id, db.name);
-                                  }}
-                                >
-                                  <span className="font-medium">📁 {db.name}</span>
-                                  <span className="text-xs text-gray-400">({db.collections.length})</span>
-                                </div>
-
-                                {/* 表列表 - 仅在选中时显示 */}
-                                {isDBSelected && db.collections.length > 0 && (
-                                  <div className="bg-gray-100 p-1 space-y-0.5">
-                                    {db.collections.map((table) => {
-                                      const isTableSelected = selectedCollection === table;
-
-                                      // 处理 schema.table 格式
-                                      let displayTableName = table;
-                                      let schemaPrefix = "";
-                                      if (table.includes('.')) {
-                                        const parts = table.split('.');
-                                        schemaPrefix = parts[0];
-                                        displayTableName = parts[1];
-                                        if (schemaPrefix === 'public') {
-                                          schemaPrefix = "";
-                                        }
-                                      }
-
-                                      return (
-                                        <div
-                                          key={table}
-                                          className={cn(
-                                            "flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-xs transition-all",
-                                            isTableSelected
-                                              ? "bg-blue-200 text-blue-800 font-medium"
-                                              : "hover:bg-gray-200 text-gray-700"
-                                          )}
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleCollectionSelect(db.name, table);
-                                          }}
-                                        >
-                                          <span className="text-gray-500">📄</span>
-                                          <span className="flex-1">
-                                            {displayTableName}
-                                            {schemaPrefix && (
-                                              <span className="ml-1 text-gray-500 opacity-75">({schemaPrefix})</span>
-                                            )}
-                                          </span>
-                                          {isTableSelected && (
-                                            <span className="text-blue-600">✓</span>
-                                          )}
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {isExpanded && (!conn.databases || conn.databases.length === 0) && (
-                        <div className="bg-gray-50 p-3 text-center text-xs text-gray-400">
-                          {loading ? '加载中...' : '该连接下暂无数据库'}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
               </div>
+            </div>
 
-              {/* 加载状态 */}
-              {loading && (
-                <div className="mt-3 text-center text-sm text-blue-600 flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-                  <span>正在连接并获取数据...</span>
+            {/* 隐藏ConnectionManagerUI但保持功能 */}
+            <div className="hidden">
+              <ConnectionManager
+                connections={connections}
+                onAdd={handleAddConnection}
+                onConnect={handleConnect}
+                onDelete={handleDeleteConnection}
+                onDisconnect={handleDisconnect}
+                isConnected={isConnected}
+                currentConnection={currentConnection}
+              />
+            </div>
+
+            {/* 树形连接列表 */}
+            <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+              {connections.length === 0 && (
+                <div className="text-center py-8 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl">
+                  <p className="text-gray-500 text-sm">暂无连接，请创建新连接</p>
                 </div>
               )}
+
+              {connections.map((conn) => {
+                const isActive = currentConnection === conn.id;
+                const isExpanded = conn.expanded && isActive;
+                const hasDatabases = conn.databases && conn.databases.length > 0;
+
+                return (
+                  <div key={conn.id} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow">
+                    {/* 连接节点 */}
+                    <div
+                      className={cn(
+                        "flex items-center justify-between p-3 cursor-pointer transition-colors",
+                        isActive ? "bg-blue-50 border-blue-200" : "hover:bg-gray-50",
+                        isExpanded && "border-b border-gray-200"
+                      )}
+                      onClick={() => {
+                        if (!isActive) {
+                          handleConnect(conn.id);
+                        } else {
+                          setConnections(prev => prev.map(c =>
+                            c.id === conn.id ? { ...c, expanded: !c.expanded } : c
+                          ));
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-2 flex-1">
+                        <div className="w-2 h-2 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600"></div>
+                        <span className={cn("font-semibold text-sm", isActive ? "text-blue-700" : "text-gray-800")}>
+                          {conn.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isActive && (
+                          <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+                            {isExpanded ? '展开' : '连接中'}
+                          </span>
+                        )}
+                        {hasDatabases && (
+                          <span className={cn("text-xs transition-transform", isExpanded ? "rotate-180" : "")}>
+                            ▼
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* 数据库列表 - 显示所有数据库 */}
+                    {isExpanded && conn.databases && conn.databases.length > 0 && (
+                      <div className="bg-gray-50 p-2 space-y-1.5">
+                        {conn.databases.map((db) => {
+                          const isDBSelected = selectedDatabase === db.name;
+
+                          return (
+                            <div key={db.name} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+                              {/* 数据库节点 */}
+                              <div
+                                className={cn(
+                                  "flex items-center justify-between p-2.5 cursor-pointer transition-colors text-sm",
+                                  isDBSelected ? "bg-blue-100 text-blue-700 border-l-4 border-blue-500" : "hover:bg-gray-50 border-l-4 border-transparent"
+                                )}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDatabaseClick(conn.id, db.name);
+                                }}
+                              >
+                                <span className="font-medium flex items-center gap-2">
+                                  <span className="text-base">📁</span>
+                                  {db.name}
+                                </span>
+                                <span className="text-xs text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">
+                                  {db.collections.length}
+                                </span>
+                              </div>
+
+                              {/* 表列表 - 仅在选中时显示 */}
+                              {isDBSelected && db.collections.length > 0 && (
+                                <div className="bg-gradient-to-br from-gray-50 to-gray-100 p-1.5 space-y-0.5 border-t border-gray-200">
+                                  {db.collections.map((table) => {
+                                    const isTableSelected = selectedCollection === table;
+
+                                    // 处理 schema.table 格式
+                                    let displayTableName = table;
+                                    let schemaPrefix = "";
+                                    if (table.includes('.')) {
+                                      const parts = table.split('.');
+                                      schemaPrefix = parts[0];
+                                      displayTableName = parts[1];
+                                      if (schemaPrefix === 'public') {
+                                        schemaPrefix = "";
+                                      }
+                                    }
+
+                                    return (
+                                      <div
+                                        key={table}
+                                        className={cn(
+                                          "flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer text-xs transition-all border",
+                                          isTableSelected
+                                            ? "bg-blue-200 text-blue-800 font-medium border-blue-300 shadow-sm"
+                                            : "hover:bg-gray-200 text-gray-700 border-transparent hover:border-gray-300"
+                                        )}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleCollectionSelect(db.name, table);
+                                        }}
+                                      >
+                                        <span className="text-gray-500">📄</span>
+                                        <span className="flex-1 font-mono">
+                                          {displayTableName}
+                                          {schemaPrefix && (
+                                            <span className="ml-1 text-gray-500 opacity-75">({schemaPrefix})</span>
+                                          )}
+                                        </span>
+                                        {isTableSelected && (
+                                          <span className="text-blue-700 font-bold">✓</span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {isExpanded && (!conn.databases || conn.databases.length === 0) && (
+                      <div className="bg-gray-50 p-4 text-center text-xs text-gray-400 border-t border-gray-200">
+                        {loading ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="animate-spin rounded-full h-3 w-3 border-2 border-blue-500 border-t-transparent"></div>
+                            <span>加载中...</span>
+                          </div>
+                        ) : '该连接下暂无数据库'}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+
+            {/* 加载状态 */}
+            {loading && (
+              <div className="mt-3 text-center text-sm text-blue-600 flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                <span>正在连接并获取数据...</span>
+              </div>
+            )}
           </div>
 
           {/* 查询区域 - 仅当有选择表时显示 */}
           {(selectedDatabase && selectedCollection) && (
-            <div className="flex-1 max-w-[calc(100%_-_var(--spacing)_*_52)]">
-              <div className="px-2 ">
+            <div className="flex-1 max-w-[calc(100%_-_18rem)] ml-4 flex flex-col">
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
                 <QueryEditor
                   onExecuteQuery={handleExecuteQuery}
                   loading={loading}
@@ -514,20 +538,19 @@ function App() {
                   collection={selectedCollection}
                 />
                 {queryResult && (
-                  <QueryResultDisplay result={queryResult} />
+                  <div className="border-t border-gray-200 flex-1 overflow-hidden">
+                    <QueryResultDisplay result={queryResult} />
+                  </div>
                 )}
               </div>
-
-
             </div>
           )}
         </div>
 
-
-        {/* 底部信息栏 */}
-        <div className="mb-8 text-center text-gray-500 text-sm">
-          <p>PostgreSQL Manager v1.0 • Built with Tauri + React + Tailwind CSS</p>
-          <p className="mt-1 text-xs">💡 提示：点击连接查看所有库，点击库名切换当前库</p>
+        {/* 底部信息栏 - 优化样式 */}
+        <div className="bg-white border-t border-gray-200 py-3 text-center text-gray-500 text-sm mt-auto">
+          <p className="font-semibold text-gray-700">PostgreSQL Manager v1.0</p>
+          <p className="mt-1 text-xs opacity-75">💡 提示：点击连接查看所有库，点击库名切换当前库</p>
         </div>
       </div>
     </div>

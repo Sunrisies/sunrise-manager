@@ -31,90 +31,82 @@ export const QueryEditor: React.FC<QueryEditorProps> = ({
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-semibold text-gray-800">查询编辑器</h2>
-                <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    {database && collection ? (
-                        <span className="font-mono">
-                            {/* 显示更简洁的格式：数据库.表名（去掉public.前缀） */}
+        <div className="space-y-3">
+            {/* 查询编辑器头部 */}
+            <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg p-3 shadow-sm">
+                <div className="flex items-center gap-4 flex-1">
+                    <h2 className="text-sm font-semibold text-gray-800">查询编辑器</h2>
+                    {database && collection && (
+                        <div className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-mono border border-blue-200">
                             {database}.{collection.includes('.') ? collection.split('.').slice(-1)[0] : collection}
-                        </span>
-                    ) : (
-                        <span className="italic">未选择表</span>
+                        </div>
                     )}
                 </div>
-                <div className="flex justify-end gap-2">
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => {
+                            setQuery('SELECT * FROM "public"."post_tags" LIMIT 1000 OFFSET 0;');
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium px-2 py-1 rounded hover:bg-blue-50 transition-colors"
+                    >
+                        SQL示例
+                    </button>
+                    <button
+                        onClick={() => {
+                            setQuery(JSON.stringify({
+                                table: "users",
+                                operation: "find",
+                                filter: { age: { "$gt": 18 } }
+                            }, null, 2));
+                        }}
+                        className="text-xs text-gray-600 hover:text-gray-800 font-medium px-2 py-1 rounded hover:bg-gray-50 transition-colors"
+                    >
+                        JSON示例
+                    </button>
                     <button
                         onClick={handleExecute}
                         disabled={loading || !query.trim()}
-                        className={cn("btn-primary text-sm px-4 py-2", loading && " opacity-70 cursor-not-allowed")}
+                        className={cn(
+                            "text-xs font-semibold px-3 py-1.5 rounded transition-all duration-200 flex items-center gap-1.5",
+                            loading || !query.trim()
+                                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md"
+                        )}
                     >
                         {loading ? (
-                            <span className="flex items-center gap-2">
+                            <>
                                 <span className="animate-spin">⟳</span>
-                                执行中...
-                            </span>
+                                执行中
+                            </>
                         ) : (
-                            "执行查询"
+                            "执行"
                         )}
                     </button>
                 </div>
             </div>
 
-            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-                    <div className="flex items-center justify-between">
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => {
-                                    setQuery('SELECT * FROM "public"."post_tags" LIMIT 1000 OFFSET 0;');
-                                }}
-                                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
-                            >
-                                SQL示例
-                            </button>
-                            <button
-                                onClick={() => {
-                                    setQuery(JSON.stringify({
-                                        table: "users",
-                                        operation: "find",
-                                        filter: { age: { "$gt": 18 } }
-                                    }, null, 2));
-                                }}
-                                className="text-xs text-gray-600 hover:text-gray-800 font-medium"
-                            >
-                                JSON示例
-                            </button>
-                        </div>
-                        <span className="text-xs text-gray-400">Ctrl/Cmd + Enter 执行</span>
-                    </div>
+            {/* 查询输入区域 */}
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                <div className="bg-gray-50 px-3 py-2 border-b border-gray-200 text-xs text-gray-500 flex items-center justify-between">
+                    <span className="font-medium">SQL / JSON 查询</span>
+                    <span className="opacity-75">快捷键: Ctrl/Cmd + Enter</span>
                 </div>
+                <textarea
+                    className="query-editor w-full h-40 resize-none border-0 focus:ring-0 font-mono text-sm"
+                    placeholder={`-- SQL 查询示例:
+SELECT * FROM "table_name" LIMIT 100;
 
-                <div className="p-4">
-                    <textarea
-                        className="query-editor w-full h-48 resize-none"
-                        placeholder={`-- 支持SQL查询，例如：
-SELECT * FROM "public"."post_tags" LIMIT 1000 OFFSET 0;
-
--- 多语句查询，用分号分隔：
-SELECT * FROM users WHERE age > 18;
-SELECT COUNT(*) FROM users;
-
--- 或者JSON格式查询：
+-- JSON 查询示例:
 {
   "table": "users",
   "operation": "find",
   "filter": { "age": { "$gt": 18 } }
 }`}
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        disabled={loading}
-                    />
-
-
-                </div>
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    disabled={loading}
+                />
             </div>
         </div>
     );
