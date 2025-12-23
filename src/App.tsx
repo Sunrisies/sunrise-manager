@@ -3,6 +3,7 @@ import { invoke } from "@tauri-apps/api/core";
 import "./App.css";
 
 import { ConnectionManager, ConnectionConfig } from "./components/connections/ConnectionManager";
+import { ConnectionForm } from "./components/connections/ConnectionForm";
 import { QueryEditor, QueryResultDisplay } from "./components/query/QueryEditor";
 import { cn } from "./lib/utils";
 
@@ -25,6 +26,8 @@ function App() {
   const [selectedDatabase, setSelectedDatabase] = useState<string | undefined>();
   const [selectedCollection, setSelectedCollection] = useState<string | undefined>();
   const [queryResult, setQueryResult] = useState<any>(null);
+  const [showConnectionForm, setShowConnectionForm] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
 
   // 从本地存储加载连接配置
   useEffect(() => {
@@ -238,6 +241,30 @@ function App() {
     setQueryResult(null);
   };
 
+  // 表单提交处理
+  const handleFormSubmit = async (config: Omit<ConnectionConfig, "id">) => {
+    setFormLoading(true);
+    try {
+      // 添加新连接
+      handleAddConnection(config);
+
+      // 自动连接新创建的连接
+      const newConnectionId = (Date.now() - 1).toString(); // 近似ID（因为handleAddConnection使用Date.now()）
+      const latestConnection = connections[connections.length - 1]; // 获取刚添加的连接
+
+      if (latestConnection) {
+        await handleConnect(latestConnection.id);
+      }
+
+      // 关闭表单
+      setShowConnectionForm(false);
+    } catch (error) {
+      console.error("Failed to submit connection form:", error);
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
   // 执行查询
   const handleExecuteQuery = async (queryStr: string) => {
     if (!isConnected) {
@@ -331,11 +358,7 @@ function App() {
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => {
-                    if ((window as any).showConnectionForm) {
-                      (window as any).showConnectionForm();
-                    }
-                  }}
+                  onClick={() => setShowConnectionForm(true)}
                   className="flex-1 bg-white/20 hover:bg-white/30 text-white text-xs font-semibold py-2 px-3 rounded-lg transition-all duration-200 backdrop-blur-sm border border-white/20 flex items-center justify-center gap-1"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -553,6 +576,15 @@ function App() {
           <p className="mt-1 text-xs opacity-75">💡 提示：点击连接查看所有库，点击库名切换当前库</p>
         </div>
       </div>
+
+      {/* 连接表单模态框 */}
+      {showConnectionForm && (
+        <ConnectionForm
+          onSubmit={handleFormSubmit}
+          onCancel={() => setShowConnectionForm(false)}
+          loading={formLoading}
+        />
+      )}
     </div>
   );
 }
